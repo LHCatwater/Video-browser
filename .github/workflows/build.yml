@@ -1,0 +1,32 @@
+name: Build app
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack the app code
+        run: for z in *.zip; do unzip -o "$z"; done
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Build the app
+        run: gradle :app:assembleRelease --no-daemon
+      - name: Name the install file
+        run: cp app/build/outputs/apk/release/app-release.apk "Longform-${{ github.run_number }}.apk"
+      - name: Publish it as a download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Longform (build ${{ github.run_number }})
+          make_latest: true
+          files: Longform-${{ github.run_number }}.apk
