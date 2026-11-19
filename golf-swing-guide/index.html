@@ -33,7 +33,7 @@ html, body { height: 100%; }
 body {
   background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 17px; line-height: 1.5;
   /* side gutter leaves room for the edge arrows */
-  padding-left: max(48px, calc(env(safe-area-inset-left, 0px) + 48px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(48px, calc(env(safe-area-inset-right, 0px) + 48px));
 }
 .wrap { max-width: 620px; margin: 0 auto; padding-block: 20px 32px; display: flex; flex-direction: column; gap: 16px; min-height: 100%; }
@@ -71,9 +71,10 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 8vw, 
 
 /* Edge arrows: the only way to change step. Fixed at the very screen edges, at about the
    height of the on-screen keyboard's number row (just under 60% down the screen). */
-nav.pager button { position: fixed; z-index: 5; top: 58vh; top: 58dvh; transform: translateY(-50%); width: 38px; height: 84px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--turf); touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+nav.pager button { position: fixed; z-index: 5; top: 58vh; top: 58dvh; transform: translateY(calc(-100% - 8px)); width: 38px; height: 84px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--turf); touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 nav.pager button svg { width: 22px; height: 22px; }
-.back { left: 0; left: env(safe-area-inset-left, 0px); border-left: 0; border-radius: 0 10px 10px 0; background: var(--card); color: var(--turf); }
+.back { right: 0; right: env(safe-area-inset-right, 0px); border-right: 0; border-radius: 10px 0 0 10px; background: var(--card); color: var(--turf); }
+nav.pager button.back { transform: translateY(8px); }
 .next { right: 0; right: env(safe-area-inset-right, 0px); border-right: 0; border-radius: 10px 0 0 10px; background: var(--turf); color: var(--card); }
 nav.pager button:disabled { opacity: .3; cursor: default; }
 .strip span { flex: 1; height: 8px; border-radius: 2px; background: var(--line); }
@@ -555,7 +556,7 @@ function render() {
   const blocked = !!nxt;
   $("next").disabled = i === STEPS.length - 1 || blocked;
   $("next").setAttribute("aria-label", blocked ? "Next step (locked)" : "Next step");
-  $("hint").textContent = lk ? "Use the left arrow to go back to a step you can practise."
+  $("hint").textContent = lk ? "Use the lower arrow on the right to go back to a step you can practise."
     : blocked && i < STEPS.length - 1 ? (nxt.kind === "time" ? `Next module opens in ${Math.ceil((nxt.at - Date.now()) / DAY)} day(s), on ${fmtDate(nxt.at)}.` : !done.has(i) ? "Log your practice and tick this step off to unlock the next one." : nxt.text)
     : "Work on this one thing until it feels normal. Then tap the arrow on the right.";
   strip(); panel();
