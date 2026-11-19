@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f6b3e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Golf Swing">
+<meta name="description" content="A beginner's golf swing guide that shows one technique at a time.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>One Thing Golf Swing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: a single scorecard-style card, one step in view; a thin "hole" strip on top shows progress. */
+:root {
+  --bg: #eef2ec;
+  --card: #ffffff;
+  --fg: #17241b;
+  --muted: #5b6b60;
+  --line: #d5ddd4;
+  --turf: #2f6b3e;
+  --turf-soft: #e1ede2;
+  --flag: #c8412b;
+  --done: #2f6b3e;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101712; --card: #18221b; --fg: #e5ece6; --muted: #9aab9f; --line: #2b3a30;
+    --turf: #7cc28b; --turf-soft: #1f3325; --flag: #ef7a63; --done: #7cc28b; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101712; --card: #18221b; --fg: #e5ece6; --muted: #9aab9f; --line: #2b3a30;
+  --turf: #7cc28b; --turf-soft: #1f3325; --flag: #ef7a63; --done: #7cc28b; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 17px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 620px; margin: 0 auto; padding-block: 20px 32px; display: flex; flex-direction: column; gap: 16px; min-height: 100%; }
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: .02em; text-transform: uppercase; }
+.brand span { color: var(--flag); }
+.toplinks { display: flex; gap: 8px; }
+.link-btn { background: none; border: 0; color: var(--turf); font: 600 15px var(--body); cursor: pointer; padding: 4px 2px; text-decoration: underline; text-underline-offset: 3px; }
+.link-btn:focus-visible, button:focus-visible, input:focus-visible + label { outline: 3px solid var(--flag); outline-offset: 2px; }
+
+/* progress strip */
+.strip { display: flex; gap: 3px; }
+.strip button { flex: 1; height: 8px; border: 0; padding: 0; border-radius: 2px; background: var(--line); cursor: pointer; }
+.strip button.done { background: var(--done); opacity: .55; }
+.strip button.here { background: var(--flag); opacity: 1; }
+.where { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.where b { color: var(--fg); font-weight: 600; }
+
+/* the one card */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 24px 22px; display: flex; flex-direction: column; gap: 18px; }
+.eyebrow { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15px; color: var(--turf); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 8vw, 46px); line-height: 1.02; margin: 0; text-wrap: balance; }
+.do { font-size: 19px; margin: 0; }
+.do strong { font-weight: 700; }
+.how { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.box { border-top: 1px solid var(--line); padding-top: 14px; display: grid; grid-template-columns: 92px 1fr; gap: 10px 12px; }
+.box dt { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 15px; color: var(--muted); padding-top: 2px; }
+.box dd { margin: 0; min-width: 0; }
+.box dd.feel { color: var(--turf); font-weight: 600; }
+@media (max-width: 420px) { .box { grid-template-columns: 1fr; gap: 2px; } .box dd { margin-bottom: 10px; } }
+
+.got { display: flex; align-items: center; gap: 10px; background: var(--turf-soft); border-radius: 4px; padding: 12px 14px; }
+.got input { width: 22px; height: 22px; accent-color: var(--turf); margin: 0; flex: none; }
+.got label { cursor: pointer; font-weight: 600; }
+
+nav.pager { display: flex; gap: 10px; }
+nav.pager button { flex: 1; font: 700 18px var(--display); text-transform: uppercase; letter-spacing: .05em; padding: 14px; border-radius: 4px; cursor: pointer; border: 1px solid var(--turf); }
+.back { background: transparent; color: var(--turf); }
+.next { background: var(--turf); color: var(--card); }
+nav.pager button:disabled { opacity: .35; cursor: default; }
+.hint { text-align: center; font-size: 14px; color: var(--muted); margin: 0; }
+
+/* all-steps panel */
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; }
+.panel h2 { font-family: var(--display); text-transform: uppercase; letter-spacing: .05em; font-size: 20px; margin: 14px 0 6px; color: var(--turf); }
+.panel h2:first-child { margin-top: 0; }
+.panel ol { margin: 0; padding: 0; list-style: none; }
+.panel li button { width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 9px 2px; font: 16px var(--body); color: var(--fg); cursor: pointer; display: flex; gap: 10px; align-items: baseline; }
+.panel li button .n { font-variant-numeric: tabular-nums; color: var(--muted); width: 2ch; text-align: right; flex: none; }
+.panel li button .tick { margin-left: auto; color: var(--done); font-weight: 700; }
+.panel li button.cur { font-weight: 700; }
+.panel p { color: var(--muted); font-size: 15px; margin: 0 0 8px; }
+
+/* intro */
+.rule { font-size: 15px; color: var(--muted); border-left: 3px solid var(--flag); padding-left: 12px; margin: 0; }
+@media (prefers-reduced-motion: no-preference) { .card { animation: in .25s ease-out; } @keyframes in { from { transform: translateY(6px); } to { transform: none; } } }
+/* locks, log, countdown */
+.strip button.locked { opacity: .45; background: repeating-linear-gradient(45deg, var(--line) 0 3px, transparent 3px 6px); }
+.panel li button.lk { color: var(--muted); }
+.tick.lock { font-size: 13px; }
+.mnote { font: 600 13px var(--body); text-transform: none; letter-spacing: 0; color: var(--muted); margin-left: 10px; }
+.mnote.open { color: var(--turf); }
+.reset { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; font-size: 15px; }
+.danger { background: var(--flag); color: var(--card); border: 0; border-radius: 4px; padding: 8px 12px; font: 600 15px var(--body); cursor: pointer; }
+.log { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.log h2 { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; font-size: 18px; margin: 0; color: var(--fg); }
+.sub { margin: 0; font-size: 15px; color: var(--muted); }
+.rows { list-style: none; margin: 0; padding: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+.rows li { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.rows .pass { color: var(--turf); font-weight: 700; } .rows .miss { color: var(--flag); font-weight: 600; }
+.rows .x { background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; }
+@media (max-width: 420px) { .rows li { grid-template-columns: 1fr auto auto; } .rows li span:first-child { grid-column: 1 / -1; color: var(--muted); font-size: 13px; } }
+.logform { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.logform label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; color: var(--muted); flex: 1 1 120px; }
+.logform input { font: 18px var(--body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); width: 100%; font-variant-numeric: tabular-nums; }
+.add { font: 700 16px var(--display); text-transform: uppercase; letter-spacing: .05em; padding: 11px 16px; border-radius: 4px; border: 1px solid var(--turf); background: transparent; color: var(--turf); cursor: pointer; flex: 1 1 120px; }
+.err { margin: 0; color: var(--flag); font-weight: 600; font-size: 15px; }
+.status { margin: 0; font-size: 15px; font-weight: 600; color: var(--muted); }
+.status.ok { color: var(--turf); }
+.got.off { opacity: .5; } .got.off label { cursor: not-allowed; }
+.clock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.clock div { background: var(--turf-soft); border-radius: 4px; padding: 12px 4px; text-align: center; display: flex; flex-direction: column; }
+.clock b { font: 700 clamp(30px, 8vw, 44px) var(--display); font-variant-numeric: tabular-nums; color: var(--turf); line-height: 1; }
+.clock span { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="brand">One Thing <span>Golf</span></div>
+    <div class="toplinks">
+      <button class="link-btn" id="toggleList" aria-expanded="false">All steps</button>
+    </div>
+  </header>
+
+  <div class="strip" id="strip" aria-label="Progress"></div>
+  <div class="where"><span id="section"></span><span><b id="num"></b> of <span id="total"></span></span></div>
+
+  <div class="panel" id="panel" hidden></div>
+
+  <article class="card" id="card" aria-live="polite"></article>
+
+  <nav class="pager">
+    <button class="back" id="back">Back</button>
+    <button class="next" id="next">Next</button>
+  </nav>
+  <p class="hint" id="hint">Work on this one thing until it feels normal. Then move on.</p>
+</div>
+
+<script>
+const STEPS = [
+  { s: "Start here", t: "How to use this guide",
+    d: "Read <strong>one step</strong>. Go practise it. Only move on when it feels normal.",
+    how: ["Each screen gives you a single thing to think about.", "Ignore everything else while you practise it, even if other parts feel wrong.", "Tick “I've got this” when it feels natural without thinking hard. Your ticks are saved on this device."],
+    feel: "One thought per swing. Never more.",
+    check: "This guide is written for a right-handed golfer. Left = the side nearest the target.",
+    drill: "Grab a 7-iron and a few balls, or just the club and some open space for the first steps." },
+
+  { s: "Setup", t: "Pick up a 7-iron",
+    d: "Learn the whole swing with <strong>one club: a 7-iron</strong>.",
+    how: ["It is the middle of the bag: not too long, not too short.", "It is forgiving and gets the ball in the air easily.", "Everything you learn with it carries over to the other clubs."],
+    feel: "Same club every session until step 21.",
+    check: "The number 7 is stamped on the bottom of the club head.",
+    drill: "Just hold it and get used to the weight. Swing it gently back and forth like a pendulum." },
+
+  { s: "Setup", t: "Left hand on the grip",
+    d: "Lay the grip across the <strong>base of your left fingers</strong>, not in your palm.",
+    how: ["Hold the club out in front of you with your right hand, club head on the ground.", "Place the grip diagonally from the base of your little finger to the middle of your index finger.", "Close your fingers, then close the hand so the left thumb sits just right of the centre of the grip."],
+    feel: "The club is held by your fingers. The palm just closes over it.",
+    check: "Look down: you can see 2 knuckles on the back of your left hand.",
+    drill: "Hold the club out horizontally with only the left hand. If you can support it with your fingers and the pad of your hand, the grip is right." },
+
+  { s: "Setup", t: "Right hand on the grip",
+    d: "Add your right hand so its <strong>palm faces the target</strong> and covers your left thumb.",
+    how: ["Put the grip in the fingers of your right hand, just below the left hand.", "Fold the right palm over so it covers your left thumb.", "Link the hands: hook the right little finger between the left index and middle fingers (interlock), or simply keep all ten fingers on the grip. Either is fine. Pick one and keep it."],
+    feel: "The two hands feel like one unit, not two separate hands.",
+    check: "The V shapes made by each thumb and index finger both point at your right shoulder.",
+    drill: "Take your grip, let go, and re-grip 10 times in a row. Check the V shapes each time." },
+
+  { s: "Setup", t: "Grip pressure: 4 out of 10",
+    d: "Hold the club <strong>firmly enough to control it, loosely enough to stay relaxed</strong>.",
+    how: ["On a scale where 1 is barely holding and 10 is squeezing as hard as you can, aim for about 4.", "Your forearms should feel soft, not tense.", "Beginners almost always squeeze too hard. Lighter is usually better."],
+    feel: "Like holding a tube of toothpaste without squeezing any out.",
+    check: "Someone could pull the club out of your hands with a firm tug.",
+    drill: "Squeeze to 10, then relax to 1, then settle at 4. Do this before each practice swing." },
+
+  { s: "Setup", t: "Aim the clubface first",
+    d: "Point the <strong>clubface</strong> at your target before you set your feet.",
+    how: ["Stand behind the ball and pick a target.", "Find a small spot on the ground (a leaf, a mark) about a foot in front of the ball, on the line to the target.", "Walk in and set the bottom edge of the clubface square to that spot."],
+    feel: "Aim at the close spot, not the far target. It is much easier.",
+    check: "The bottom edge (leading edge) of the club looks like a line at right angles to your target line.",
+    drill: "Lay a club or alignment stick on the ground pointing at the target. Practise setting the clubface square to it." },
+
+  { s: "Setup", t: "Line up your body",
+    d: "Set your <strong>feet, hips and shoulders parallel</strong> to the target line.",
+    how: ["Think of railway tracks: the ball and clubface are on the outer rail, pointing at the target.", "Your toes are on the inner rail.", "Because of this, your body points slightly left of the target. That is correct."],
+    feel: "Body aims parallel left, clubface aims at the target.",
+    check: "Lay a club across your toes. It should be parallel to the target line, not pointing at the target.",
+    drill: "Use two clubs on the ground: one along the target line, one along your toes. Practise stepping in to them." },
+
+  { s: "Setup", t: "Stance width",
+    d: "Stand with your <strong>feet about shoulder width apart</strong>.",
+    how: ["Measure from the insides of your heels to the outside of your shoulders.", "Point your feet straight ahead, or turn the left foot out slightly.", "Too narrow and you lose balance. Too wide and you can't turn."],
+    feel: "Stable and athletic, like you're ready to catch a ball.",
+    check: "Hold a club across your shoulders and let it drop down: it should land near the insides of your feet.",
+    drill: "Take your stance, then have a gentle nudge test: you shouldn't wobble if pushed lightly from the side." },
+
+  { s: "Setup", t: "Ball in the middle",
+    d: "For a 7-iron, put the ball <strong>in the middle of your stance</strong>.",
+    how: ["Halfway between your two feet.", "If anything, a fraction to the left of centre is fine.", "Later, shorter clubs go slightly back and longer clubs go further forward. Don't worry about that yet."],
+    feel: "The ball sits under the logo on your shirt.",
+    check: "Lay a club on the ground from the ball straight back toward you. It should point between your feet.",
+    drill: "Put a tee in the ground at the middle of your stance. Step in, check, step away, repeat." },
+
+  { s: "Setup", t: "Bend from the hips",
+    d: "Tilt forward by <strong>pushing your hips back</strong>, keeping your back straight.",
+    how: ["Stand tall with the club across the front of your hips.", "Push the club back into the crease of your hips, and tilt your chest forward over the ball.", "Keep your back straight, not hunched or rounded."],
+    feel: "Like closing a car door with your bottom while your hands are full.",
+    check: "From the side, your back is a straight line and your bottom sticks out behind your heels.",
+    drill: "Do this tilt 10 times in front of a mirror or window. Check your back is straight each time." },
+
+  { s: "Setup", t: "Soft knees, hanging arms",
+    d: "Flex your <strong>knees slightly</strong> and let your <strong>arms hang straight down</strong>.",
+    how: ["After the hip tilt, unlock your knees a little. Not a squat.", "Let your arms hang naturally from your shoulders.", "Your hands should be roughly under your chin, about a fist's width from your thighs."],
+    feel: "Relaxed, like a tennis player waiting for a serve.",
+    check: "A hand's width (a fist) fits between the end of the grip and your thighs.",
+    drill: "Take your setup, let go of the club with one hand and check the fist gap. Then re-grip." },
+
+  { s: "Setup", t: "Balance your weight",
+    d: "Spread your weight <strong>evenly between both feet</strong>, over the middle of your feet.",
+    how: ["Not on your heels, not on your toes.", "About 50/50 between left and right foot.", "You should feel ready to move, like a goalkeeper."],
+    feel: "Weight over the laces of your shoes.",
+    check: "You could lift your toes slightly without falling backwards, and lift your heels slightly without falling forwards.",
+    drill: "Rock gently heels-to-toes, then settle in the middle. Do this before every shot for a week." },
+
+  { s: "The swing", t: "The takeaway",
+    d: "Start the swing by moving the <strong>club, hands, arms and chest together</strong>, low and slow.",
+    how: ["Turn your chest away and let the club go back with it, all as one piece.", "Keep the club head low to the ground for the first foot or so.", "Stop when your hands reach hip height."],
+    feel: "A triangle made by your arms and shoulders turns away together.",
+    check: "At hip height, the club is parallel to the ground and the toe of the club points up to the sky.",
+    drill: "Take the club back to hip height and stop. Check the toe points up. Return. 20 times." },
+
+  { s: "The swing", t: "Hinge the wrists",
+    d: "As your hands pass hip height, <strong>hinge your wrists</strong> so the club points up.",
+    how: ["Keep turning, and let your wrists cock the club upward.", "By the time your left arm is parallel to the ground, the club should point up at the sky.", "This forms an L shape between your left arm and the club."],
+    feel: "Your thumbs move up toward your right shoulder.",
+    check: "Left arm parallel to the ground, club pointing up: an L shape.",
+    drill: "Swing back to the L position and hold for 2 seconds. Check in a mirror or window reflection." },
+
+  { s: "The swing", t: "Turn to the top",
+    d: "Keep turning until your <strong>back faces the target</strong>.",
+    how: ["Your shoulders turn about a quarter turn (90 degrees).", "Your hips turn too, but less.", "Your weight moves into your right foot, on the inside of the foot. Don't let your body slide to the right."],
+    feel: "A wind-up, like a spring being coiled.",
+    check: "At the top, your left shoulder is under your chin and your left arm is fairly straight (not locked).",
+    drill: "Hold a club across your chest, take your setup and turn until the club points at the ball. Repeat 10 times." },
+
+  { s: "The swing", t: "Start down with your feet",
+    d: "Begin the downswing by <strong>shifting your weight to your left foot</strong>.",
+    how: ["Before your arms do anything, push your weight across to your left side.", "Your left hip moves slightly toward the target.", "Your arms will start falling naturally. Don't throw them at the ball."],
+    feel: "Like stepping into a throw. The lower body leads, the arms follow.",
+    check: "Halfway down, more of your weight is on your left foot than your right.",
+    drill: "Step-through drill: start with feet together, swing back, step your left foot toward the target, then swing through." },
+
+  { s: "The swing", t: "Turn through",
+    d: "Keep <strong>turning your hips and chest</strong> toward the target as you swing down.",
+    how: ["Once your weight has shifted, rotate.", "Your belt buckle turns toward the target.", "Your arms come along for the ride. Rotation powers the swing, not your arms."],
+    feel: "Your belly button chases the target.",
+    check: "As the club reaches the ball, your hips have already started to open toward the target.",
+    drill: "Half swings (hip height to hip height) focusing only on turning your belt buckle to the target." },
+
+  { s: "The swing", t: "Ball first, then ground",
+    d: "Hit <strong>the ball first, then the ground</strong>, with your hands slightly ahead of the ball.",
+    how: ["With an iron you hit down on the ball. The club's angle lifts it into the air. Don't try to scoop it.", "Your hands are slightly closer to the target than the club head at impact.", "Any grass you take (a divot) should be in front of where the ball was."],
+    feel: "Trap the ball between the clubface and the ground.",
+    check: "Your divot, or brush mark, starts on the target side of the ball.",
+    drill: "Draw a line on the ground (or lay a towel) and put the ball on it. Try to brush the ground just past the line." },
+
+  { s: "The swing", t: "Extend toward the target",
+    d: "After impact, let <strong>both arms stretch out toward the target</strong>.",
+    how: ["Keep swinging through the ball, not at it.", "Both arms straighten after the ball has gone.", "Your forearms roll over naturally. Don't stop or hold them back."],
+    feel: "Reaching out to shake hands with someone standing on the target line.",
+    check: "Just after impact, both arms are straight and pointing down the target line.",
+    drill: "Half swings, freezing the position just after impact. Check both arms are extended." },
+
+  { s: "The swing", t: "Hold your finish",
+    d: "Finish <strong>facing the target, balanced on your left foot</strong>.",
+    how: ["Your chest and belt buckle face the target.", "Nearly all your weight (about 90%) is on your left foot.", "Your right heel is up, resting on the toe of your right shoe. The club is over your left shoulder."],
+    feel: "Pose for the photo.",
+    check: "You can hold the finish without wobbling for 3 seconds.",
+    drill: "Hit every practice ball and hold the finish for a count of three. If you can't, swing slower." },
+
+  { s: "Put it together", t: "Smooth rhythm",
+    d: "Swing at <strong>about 75% effort</strong> with a smooth, even rhythm.",
+    how: ["The backswing is slower than the downswing.", "Say “one-and” on the way back and “two” as you swing through.", "Smooth beats hard. Swinging harder usually makes the ball go less far."],
+    feel: "Unhurried at the top. No jerk from backswing to downswing.",
+    check: "Your finish (step 19) is balanced. If it isn't, your rhythm is too fast.",
+    drill: "Hit 10 balls saying “one-and… two” out loud. Same rhythm every time." },
+
+  { s: "Put it together", t: "A pre-shot routine",
+    d: "Do <strong>the same short routine</strong> before every shot.",
+    how: ["Stand behind the ball and pick a target.", "Find your spot a foot in front of the ball (step 6).", "Set the clubface, then your feet. One practice waggle, one breath, then swing."],
+    feel: "Same steps, same order, every time.",
+    check: "The routine takes about the same time on every shot, roughly 15 to 20 seconds.",
+    drill: "For a whole range session, never hit a ball without doing the full routine first." },
+
+  { s: "Driver changes", t: "Driver: tee it high",
+    d: "Tee the ball so <strong>half of it sits above the top of the driver</strong>.",
+    how: ["Only start on the driver once your 7-iron swing feels comfortable.", "Set the driver on the ground behind the ball.", "The ball's equator should line up with the top edge of the club head."],
+    feel: "You'll sweep the ball off the tee, not hit down on it.",
+    check: "Half the ball is visible above the top of the club head.",
+    drill: "Before each driver swing, crouch and check the height from the side." },
+
+  { s: "Driver changes", t: "Driver: ball forward",
+    d: "Move the ball <strong>forward, in line with your left heel</strong>.",
+    how: ["With the 7-iron it was in the middle. With the driver it moves well forward.", "Line it up with the inside of your left heel.", "This lets you hit it slightly on the way up."],
+    feel: "The ball is under your left armpit.",
+    check: "A club laid from the ball back toward you points at your left heel.",
+    drill: "Put a club on the ground pointing at your left heel and tee the ball on that line." },
+
+  { s: "Driver changes", t: "Driver: wider stance",
+    d: "Widen your feet so they are <strong>a little wider than your shoulders</strong>.",
+    how: ["The driver is the longest club and you'll swing it longer.", "A wider base keeps you balanced.", "Move your right foot out to widen, not your left."],
+    feel: "Planted and stable, like you're bracing for a push.",
+    check: "The insides of your heels are just outside your shoulders.",
+    drill: "Set up with your 7-iron stance, then step your right foot out a few inches." },
+
+  { s: "Driver changes", t: "Driver: tilt away",
+    d: "Tilt your upper body <strong>slightly away from the target</strong>.",
+    how: ["Let your right shoulder sit a little lower than your left.", "Your head stays slightly behind the ball.", "This sets you up to hit up on the ball."],
+    feel: "Your spine leans a little to your right, like leaning back on the wind.",
+    check: "Your head is behind the ball and your right shoulder is lower than your left.",
+    drill: "Take your setup, slide your right hand down your right thigh a few inches, then grip the club." },
+
+  { s: "Driver changes", t: "Driver: sweep it",
+    d: "Swing <strong>level or slightly upward</strong> through the ball. No divot.",
+    how: ["The same swing as your irons. Only the setup has changed.", "Because the ball is forward and you are tilted, the club catches it on the way up.", "Don't try to lift it. Trust the setup."],
+    feel: "Sweep the ball off the tee like brushing crumbs off a table.",
+    check: "The tee often stays in the ground or flies just forward. You don't hit the turf.",
+    drill: "Tee a ball and place a second tee 30cm in front of it. Try to clip that second tee after hitting the ball." },
+
+  { s: "Quick fixes", t: "Hitting the ground first",
+    d: "If you hit the ground before the ball (a <strong>fat shot</strong>), shift your weight to your left foot earlier.",
+    how: ["Fat shots usually mean your weight stayed on your right foot.", "Go back to step 15 and start the downswing with your feet.", "Check the ball isn't too far forward (step 9)."],
+    feel: "Lean into your left side as you swing down.",
+    check: "Your divot starts after where the ball was.",
+    drill: "Hit balls with your right heel lifted off the ground. It forces your weight onto your left foot." },
+
+  { s: "Quick fixes", t: "Topping the ball",
+    d: "If you hit the top of the ball, <strong>keep your chest down</strong> until after impact.",
+    how: ["Topping usually means you stood up too early, trying to see where the ball went.", "Keep the bend from step 10 all the way through the ball.", "Let the finish lift you up, not the downswing."],
+    feel: "Watch the spot where the ball was for a moment after you hit it.",
+    check: "After impact you can still see the ground where the ball sat.",
+    drill: "Place a coin behind the ball and keep looking at it until the ball has gone." },
+
+  { s: "Quick fixes", t: "Ball curving right",
+    d: "If the ball curves away to the right (a <strong>slice</strong>), check your grip first.",
+    how: ["A slice means the clubface is open (pointing right) at impact.", "Go back to step 3: make sure you can see 2 knuckles on your left hand.", "Then step 18: let your forearms roll over after impact."],
+    feel: "Your right hand rolls over the left after the ball.",
+    check: "Both thumb V shapes point at your right shoulder.",
+    drill: "Hit half swings feeling the toe of the club point up again on the follow-through, mirroring step 12." },
+
+  { s: "Quick fixes", t: "You've finished the guide",
+    d: "Keep coming back to <strong>one step at a time</strong> whenever something goes wrong.",
+    how: ["Use “All steps” at the top to jump straight to any step.", "When a shot goes wrong, pick just one step to check, starting with setup.", "Most problems in golf start before the club moves."],
+    feel: "One thing at a time, every session.",
+    check: "A lesson with a local golf professional can confirm you're on track.",
+    drill: "Next range session: hit 10 balls with your full routine and hold every finish." }
+];
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+/* Progression rules */
+const MODULES = ["Start here", "Setup", "The swing", "Put it together", "Driver changes"];
+const FREE = "Quick fixes";             // always open: it's for troubleshooting
+const WAIT_DAYS = { "Start here": 0, "Setup": 14, "The swing": 14, "Put it together": 14, "Driver changes": 14 };
+const NEED_SESSIONS = 2, MIN_REPS = 10, PASS_RATE = 0.7;
+const DAY = 86400000;
+
+let done = new Set(store.get("golf-done", []));
+let logs = store.get("golf-logs", {});         // { stepIndex: [{t, reps, ok}] }
+let modStart = store.get("golf-modstart", {}); // { module: timestamp first opened }
+let i = 0, confirmReset = false;
+
+const save = () => { store.set("golf-done", [...done]); store.set("golf-logs", logs); store.set("golf-modstart", modStart); };
+const stepsIn = m => STEPS.map((s, k) => k).filter(k => STEPS[k].s === m);
+const needsLog = k => STEPS[k].s !== FREE && k !== 0;
+const logOf = k => logs[k] || [];
+function logReady(k) {
+  if (!needsLog(k)) return true;
+  const L = logOf(k);
+  return L.length >= NEED_SESSIONS && L[L.length - 1].ok / L[L.length - 1].reps >= PASS_RATE;
+}
+const modDone = m => stepsIn(m).every(k => done.has(k));
+/* When does module m open? null = waiting on unfinished steps; a timestamp = opens then (may be past) */
+function opensAt(m) {
+  const idx = MODULES.indexOf(m);
+  if (idx <= 0) return 0;
+  const prev = MODULES[idx - 1];
+  if (!modDone(prev)) return null;
+  const pOpen = opensAt(prev);
+  if (pOpen === null) return null;
+  const start = modStart[prev] ?? Date.now();
+  return start + WAIT_DAYS[prev] * DAY;
+}
+/* Why is step k locked? null = open */
+function lockReason(k) {
+  const m = STEPS[k].s;
+  if (m === FREE) return null;
+  const at = opensAt(m);
+  if (at === null) {
+    const prev = MODULES[MODULES.indexOf(m) - 1];
+    const left = stepsIn(prev).filter(j => !done.has(j)).length;
+    return { kind: "steps", text: `Finish the ${prev} module first. ${left} step${left === 1 ? "" : "s"} left to tick off.` };
+  }
+  if (at > Date.now()) return { kind: "time", at, text: `You've ticked off every step in ${MODULES[MODULES.indexOf(m) - 1]}. Each module gets ${WAIT_DAYS[MODULES[MODULES.indexOf(m) - 1]]} days of practice before the next one opens.` };
+  const inMod = stepsIn(m), pos = inMod.indexOf(k);
+  if (pos > 0 && !done.has(inMod[pos - 1])) return { kind: "step", text: `Tick off step ${inMod[pos - 1] + 1} (${STEPS[inMod[pos - 1]].t}) first.` };
+  return null;
+}
+function fmtLeft(ms) {
+  ms = Math.max(0, ms);
+  const d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 3600000), mi = Math.floor(ms % 3600000 / 60000), s = Math.floor(ms % 60000 / 1000);
+  return [[d, "days"], [h, "hrs"], [mi, "min"], [s, "sec"]];
+}
+const fmtDate = t => new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function fromHash() {
+  const m = /^#step-(\d+)$/.exec(location.hash);
+  if (m) { const n = parseInt(m[1], 10) - 1; if (n >= 0 && n < STEPS.length) return n; }
+  return null;
+}
+
+function strip() {
+  $("strip").innerHTML = STEPS.map((s, k) =>
+    `<button type="button" class="${k === i ? "here" : done.has(k) ? "done" : lockReason(k) ? "locked" : ""}" aria-label="Step ${k + 1}: ${s.t}${lockReason(k) ? " (locked)" : ""}"></button>`).join("");
+  [...$("strip").children].forEach((b, k) => b.onclick = () => go(k));
+}
+
+function panel() {
+  let html = "", last = "";
+  STEPS.forEach((s, k) => {
+    if (s.s !== last) {
+      if (last) html += "</ol>";
+      let note = "";
+      if (MODULES.includes(s.s) && s.s !== "Start here") {
+        const at = opensAt(s.s);
+        note = at === null ? '<span class="mnote">Locked</span>' : at > Date.now() ? `<span class="mnote">Opens ${fmtDate(at)}</span>` : "";
+      } else if (s.s === FREE) note = '<span class="mnote open">Always open</span>';
+      html += `<h2>${s.s}${note}</h2><ol>`; last = s.s;
+    }
+    const lk = lockReason(k);
+    html += `<li><button type="button" data-k="${k}" class="${k === i ? "cur" : ""}${lk ? " lk" : ""}"><span class="n">${k + 1}</span>${lk ? "Locked step" : s.t}${done.has(k) ? '<span class="tick">✓</span>' : lk ? '<span class="tick lock">🔒</span>' : ""}</button></li>`;
+  });
+  html += "</ol>";
+  html += confirmReset
+    ? `<div class="reset"><span>Clear all ticks, practice logs and timers on this device?</span><button type="button" class="danger" id="resetYes">Clear everything</button><button type="button" class="link-btn" id="resetNo">Keep my progress</button></div>`
+    : `<div class="reset"><button type="button" class="link-btn" id="resetAsk">Reset my progress</button></div>`;
+  $("panel").innerHTML = '<p>Tap an open step to jump to it, then close this list and focus on that one step. Locked steps stay hidden until you reach them.</p>' + html;
+  $("panel").querySelectorAll("button[data-k]").forEach(b => b.onclick = () => { go(+b.dataset.k); showList(false); });
+  if ($("resetAsk")) $("resetAsk").onclick = () => { confirmReset = true; panel(); };
+  if ($("resetNo")) $("resetNo").onclick = () => { confirmReset = false; panel(); };
+  if ($("resetYes")) $("resetYes").onclick = () => {
+    done = new Set(); logs = {}; modStart = {}; confirmReset = false; save(); showList(false); go(0);
+  };
+}
+
+function lockCard(lk) {
+  const s = STEPS[i];
+  let body = `<p class="do">${lk.text}</p>`;
+  if (lk.kind === "time") body += `<div class="clock" id="clock" aria-label="Time until this module opens"></div><p class="sub">Opens on ${fmtDate(lk.at)}. Keep practising the steps you've already ticked. Repetition is what makes them stick.</p>`;
+  $("card").innerHTML = `<div class="eyebrow">${s.s} · Step ${i + 1}</div><h1>Not yet</h1>${body}`;
+  tickClock();
+}
+
+function tickClock() {
+  const c = $("clock"); if (!c) return;
+  const lk = lockReason(i);
+  if (!lk || lk.kind !== "time") { render(); return; }
+  c.innerHTML = fmtLeft(lk.at - Date.now()).map(([v, u]) => `<div><b>${String(v).padStart(2, "0")}</b><span>${u}</span></div>`).join("");
+}
+setInterval(tickClock, 1000);
+
+function logBlock() {
+  if (!needsLog(i)) return "";
+  const L = logOf(i), ready = logReady(i);
+  const rows = L.map((e, n) => `<li><span>${fmtDate(e.t)}</span><span>${e.ok} of ${e.reps} passed the Check</span><span class="${e.ok / e.reps >= PASS_RATE ? "pass" : "miss"}">${e.ok / e.reps >= PASS_RATE ? "Pass" : "Keep going"}</span><button type="button" class="x" data-n="${n}" aria-label="Delete this session">×</button></li>`).join("");
+  const last = L[L.length - 1];
+  let status;
+  if (ready) status = "Done. You can tick this step off.";
+  else if (L.length < NEED_SESSIONS) status = `Log ${NEED_SESSIONS - L.length} more session${NEED_SESSIONS - L.length === 1 ? "" : "s"}. Your latest one needs at least ${PASS_RATE * 10} out of 10 to pass.`;
+  else status = `Your latest session scored ${last.ok} of ${last.reps}. Practise again and log a session with at least ${Math.ceil(PASS_RATE * 100)}% passing.`;
+  return `<section class="log">
+    <h2>Practice log</h2>
+    <p class="sub">Do at least ${MIN_REPS} reps, then count how many passed the <b>Check</b> above.</p>
+    ${rows ? `<ul class="rows">${rows}</ul>` : ""}
+    <form id="logForm" class="logform" novalidate>
+      <label for="reps-${i}">Reps done<input id="reps-${i}" type="number" inputmode="numeric" min="${MIN_REPS}" max="500" value="${MIN_REPS}" required></label>
+      <label for="ok-${i}">Passed the Check<input id="ok-${i}" type="number" inputmode="numeric" min="0" max="500" placeholder="0" required></label>
+      <button type="submit" class="add">Log session</button>
+    </form>
+    <p class="err" id="logErr" hidden></p>
+    <p class="status ${ready ? "ok" : ""}">${status}</p>
+  </section>`;
+}
+
+function render() {
+  const s = STEPS[i], lk = lockReason(i);
+  if (!lk && MODULES.includes(s.s) && modStart[s.s] === undefined) { modStart[s.s] = Date.now(); save(); }
+  if (lk) lockCard(lk);
+  else {
+    const ready = logReady(i);
+    $("card").innerHTML = `
+      <div class="eyebrow">${s.s} · Step ${i + 1}</div>
+      <h1>${s.t}</h1>
+      <p class="do">${s.d}</p>
+      <ul class="how">${s.how.map(h => `<li>${h}</li>`).join("")}</ul>
+      <dl class="box">
+        <dt>Feel</dt><dd class="feel">${s.feel}</dd>
+        <dt>Check</dt><dd>${s.check}</dd>
+        <dt>Practise</dt><dd>${s.drill}</dd>
+      </dl>
+      ${logBlock()}
+      <div class="got ${ready ? "" : "off"}"><input type="checkbox" id="got-${i}" ${done.has(i) ? "checked" : ""} ${ready || done.has(i) ? "" : "disabled"}><label for="got-${i}">I've got this. It feels normal now.</label></div>`;
+    $("got-" + i).onchange = e => { e.target.checked ? done.add(i) : done.delete(i); save(); render(); };
+    const f = $("logForm");
+    if (f) {
+      f.onsubmit = e => {
+        e.preventDefault();
+        const reps = parseInt($("reps-" + i).value, 10), ok = parseInt($("ok-" + i).value, 10);
+        const err = $("logErr");
+        let msg = "";
+        if (!(reps >= MIN_REPS)) msg = `Do at least ${MIN_REPS} reps before logging a session.`;
+        else if (isNaN(ok) || ok < 0) msg = "Enter how many reps passed the Check (0 or more).";
+        else if (ok > reps) msg = "Passed reps can't be more than reps done.";
+        if (msg) { err.textContent = msg; err.hidden = false; return; }
+        (logs[i] = logOf(i)).push({ t: Date.now(), reps, ok }); save(); render();
+      };
+      $("card").querySelectorAll(".x").forEach(b => b.onclick = () => {
+        logs[i].splice(+b.dataset.n, 1);
+        if (!logReady(i)) done.delete(i);
+        save(); render();
+      });
+    }
+  }
+  $("section").textContent = s.s;
+  $("num").textContent = i + 1;
+  $("total").textContent = STEPS.length;
+  $("back").disabled = i === 0;
+  const nxt = i + 1 < STEPS.length ? lockReason(i + 1) : { text: "This is the last step." };
+  const blocked = !!nxt;
+  $("next").disabled = i === STEPS.length - 1 || blocked;
+  $("next").textContent = i === 0 ? "Start" : blocked ? "Locked" : "Next";
+  $("hint").textContent = lk ? "Use Back to return to a step you can practise."
+    : blocked && i < STEPS.length - 1 ? (nxt.kind === "time" ? `Next module opens in ${Math.ceil((nxt.at - Date.now()) / DAY)} day(s), on ${fmtDate(nxt.at)}.` : !done.has(i) ? "Log your practice and tick this step off to unlock the next one." : nxt.text)
+    : "Work on this one thing until it feels normal. Then move on.";
+  strip(); panel();
+}
+
+function go(k, push = true) {
+  i = Math.max(0, Math.min(STEPS.length - 1, k));
+  if (push && location.hash !== "#step-" + (i + 1)) history.replaceState(null, "", "#step-" + (i + 1));
+  store.set("golf-at", i);
+  render();
+  window.scrollTo({ top: 0 });
+}
+
+function showList(on) {
+  $("panel").hidden = !on;
+  $("card").hidden = on;
+  document.querySelector(".pager").hidden = on;
+  $("hint").hidden = on;
+  $("toggleList").textContent = on ? "Close list" : "All steps";
+  $("toggleList").setAttribute("aria-expanded", on);
+}
+
+$("back").onclick = () => go(i - 1);
+$("next").onclick = () => go(i + 1);
+$("toggleList").onclick = () => { confirmReset = false; showList($("panel").hidden); };
+document.addEventListener("keydown", e => {
+  if (["INPUT", "BUTTON"].includes(e.target.tagName) && e.target.type !== "checkbox" && e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight" && !$("next").disabled) go(i + 1);
+  if (e.key === "ArrowLeft") go(i - 1);
+});
+let sx = null;
+$("card").addEventListener("touchstart", e => { sx = e.touches[0].clientX; }, { passive: true });
+$("card").addEventListener("touchend", e => {
+  if (sx === null) return;
+  const dx = e.changedTouches[0].clientX - sx; sx = null;
+  if (Math.abs(dx) > 60) { if (dx < 0 && !$("next").disabled) go(i + 1); else if (dx > 0) go(i - 1); }
+});
+window.addEventListener("hashchange", () => { const h = fromHash(); if (h !== null && h !== i) go(h, false); });
+
+const h = fromHash();
+go(h !== null ? h : store.get("golf-at", 0), h === null);
+</script>
+
+<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script>
+</body>
+</html>
