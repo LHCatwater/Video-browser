@@ -89,6 +89,34 @@ nav.pager button:disabled { opacity: .35; cursor: default; }
 /* intro */
 .rule { font-size: 15px; color: var(--muted); border-left: 3px solid var(--flag); padding-left: 12px; margin: 0; }
 @media (prefers-reduced-motion: no-preference) { .card { animation: in .25s ease-out; } @keyframes in { from { transform: translateY(6px); } to { transform: none; } } }
+/* locks, log, countdown */
+.strip button.locked { opacity: .45; background: repeating-linear-gradient(45deg, var(--line) 0 3px, transparent 3px 6px); }
+.panel li button.lk { color: var(--muted); }
+.tick.lock { font-size: 13px; }
+.mnote { font: 600 13px var(--body); text-transform: none; letter-spacing: 0; color: var(--muted); margin-left: 10px; }
+.mnote.open { color: var(--turf); }
+.reset { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; font-size: 15px; }
+.danger { background: var(--flag); color: var(--card); border: 0; border-radius: 4px; padding: 8px 12px; font: 600 15px var(--body); cursor: pointer; }
+.log { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.log h2 { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; font-size: 18px; margin: 0; color: var(--fg); }
+.sub { margin: 0; font-size: 15px; color: var(--muted); }
+.rows { list-style: none; margin: 0; padding: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+.rows li { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.rows .pass { color: var(--turf); font-weight: 700; } .rows .miss { color: var(--flag); font-weight: 600; }
+.rows .x { background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; }
+@media (max-width: 420px) { .rows li { grid-template-columns: 1fr auto auto; } .rows li span:first-child { grid-column: 1 / -1; color: var(--muted); font-size: 13px; } }
+.logform { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.logform label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; color: var(--muted); flex: 1 1 120px; }
+.logform input { font: 18px var(--body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); width: 100%; font-variant-numeric: tabular-nums; }
+.add { font: 700 16px var(--display); text-transform: uppercase; letter-spacing: .05em; padding: 11px 16px; border-radius: 4px; border: 1px solid var(--turf); background: transparent; color: var(--turf); cursor: pointer; flex: 1 1 120px; }
+.err { margin: 0; color: var(--flag); font-weight: 600; font-size: 15px; }
+.status { margin: 0; font-size: 15px; font-weight: 600; color: var(--muted); }
+.status.ok { color: var(--turf); }
+.got.off { opacity: .5; } .got.off label { cursor: not-allowed; }
+.clock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.clock div { background: var(--turf-soft); border-radius: 4px; padding: 12px 4px; text-align: center; display: flex; flex-direction: column; }
+.clock b { font: 700 clamp(30px, 8vw, 44px) var(--display); font-variant-numeric: tabular-nums; color: var(--turf); line-height: 1; }
+.clock span { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 4px; }
 </style>
 
 <div class="wrap">
@@ -110,7 +138,7 @@ nav.pager button:disabled { opacity: .35; cursor: default; }
     <button class="back" id="back">Back</button>
     <button class="next" id="next">Next</button>
   </nav>
-  <p class="hint">Work on this one thing until it feels normal. Then move on.</p>
+  <p class="hint" id="hint">Work on this one thing until it feels normal. Then move on.</p>
 </div>
 
 <script>
@@ -338,8 +366,62 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
+
+/* Progression rules */
+const MODULES = ["Start here", "Setup", "The swing", "Put it together", "Driver changes"];
+const FREE = "Quick fixes";             // always open: it's for troubleshooting
+const WAIT_DAYS = { "Start here": 0, "Setup": 14, "The swing": 14, "Put it together": 14, "Driver changes": 14 };
+const NEED_SESSIONS = 2, MIN_REPS = 10, PASS_RATE = 0.7;
+const DAY = 86400000;
+
 let done = new Set(store.get("golf-done", []));
-let i = 0;
+let logs = store.get("golf-logs", {});         // { stepIndex: [{t, reps, ok}] }
+let modStart = store.get("golf-modstart", {}); // { module: timestamp first opened }
+let i = 0, confirmReset = false;
+
+const save = () => { store.set("golf-done", [...done]); store.set("golf-logs", logs); store.set("golf-modstart", modStart); };
+const stepsIn = m => STEPS.map((s, k) => k).filter(k => STEPS[k].s === m);
+const needsLog = k => STEPS[k].s !== FREE && k !== 0;
+const logOf = k => logs[k] || [];
+function logReady(k) {
+  if (!needsLog(k)) return true;
+  const L = logOf(k);
+  return L.length >= NEED_SESSIONS && L[L.length - 1].ok / L[L.length - 1].reps >= PASS_RATE;
+}
+const modDone = m => stepsIn(m).every(k => done.has(k));
+/* When does module m open? null = waiting on unfinished steps; a timestamp = opens then (may be past) */
+function opensAt(m) {
+  const idx = MODULES.indexOf(m);
+  if (idx <= 0) return 0;
+  const prev = MODULES[idx - 1];
+  if (!modDone(prev)) return null;
+  const pOpen = opensAt(prev);
+  if (pOpen === null) return null;
+  const start = modStart[prev] ?? Date.now();
+  return start + WAIT_DAYS[prev] * DAY;
+}
+/* Why is step k locked? null = open */
+function lockReason(k) {
+  const m = STEPS[k].s;
+  if (m === FREE) return null;
+  const at = opensAt(m);
+  if (at === null) {
+    const prev = MODULES[MODULES.indexOf(m) - 1];
+    const left = stepsIn(prev).filter(j => !done.has(j)).length;
+    return { kind: "steps", text: `Finish the ${prev} module first. ${left} step${left === 1 ? "" : "s"} left to tick off.` };
+  }
+  if (at > Date.now()) return { kind: "time", at, text: `You've ticked off every step in ${MODULES[MODULES.indexOf(m) - 1]}. Each module gets ${WAIT_DAYS[MODULES[MODULES.indexOf(m) - 1]]} days of practice before the next one opens.` };
+  const inMod = stepsIn(m), pos = inMod.indexOf(k);
+  if (pos > 0 && !done.has(inMod[pos - 1])) return { kind: "step", text: `Tick off step ${inMod[pos - 1] + 1} (${STEPS[inMod[pos - 1]].t}) first.` };
+  return null;
+}
+function fmtLeft(ms) {
+  ms = Math.max(0, ms);
+  const d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 3600000), mi = Math.floor(ms % 3600000 / 60000), s = Math.floor(ms % 60000 / 1000);
+  return [[d, "days"], [h, "hrs"], [mi, "min"], [s, "sec"]];
+}
+const fmtDate = t => new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 function fromHash() {
   const m = /^#step-(\d+)$/.exec(location.hash);
@@ -349,43 +431,127 @@ function fromHash() {
 
 function strip() {
   $("strip").innerHTML = STEPS.map((s, k) =>
-    `<button type="button" class="${k === i ? "here" : done.has(k) ? "done" : ""}" aria-label="Step ${k + 1}: ${s.t}"></button>`).join("");
+    `<button type="button" class="${k === i ? "here" : done.has(k) ? "done" : lockReason(k) ? "locked" : ""}" aria-label="Step ${k + 1}: ${s.t}${lockReason(k) ? " (locked)" : ""}"></button>`).join("");
   [...$("strip").children].forEach((b, k) => b.onclick = () => go(k));
 }
 
 function panel() {
   let html = "", last = "";
   STEPS.forEach((s, k) => {
-    if (s.s !== last) { if (last) html += "</ol>"; html += `<h2>${s.s}</h2><ol>`; last = s.s; }
-    html += `<li><button type="button" data-k="${k}" class="${k === i ? "cur" : ""}"><span class="n">${k + 1}</span>${s.t}${done.has(k) ? '<span class="tick">✓</span>' : ""}</button></li>`;
+    if (s.s !== last) {
+      if (last) html += "</ol>";
+      let note = "";
+      if (MODULES.includes(s.s) && s.s !== "Start here") {
+        const at = opensAt(s.s);
+        note = at === null ? '<span class="mnote">Locked</span>' : at > Date.now() ? `<span class="mnote">Opens ${fmtDate(at)}</span>` : "";
+      } else if (s.s === FREE) note = '<span class="mnote open">Always open</span>';
+      html += `<h2>${s.s}${note}</h2><ol>`; last = s.s;
+    }
+    const lk = lockReason(k);
+    html += `<li><button type="button" data-k="${k}" class="${k === i ? "cur" : ""}${lk ? " lk" : ""}"><span class="n">${k + 1}</span>${lk ? "Locked step" : s.t}${done.has(k) ? '<span class="tick">✓</span>' : lk ? '<span class="tick lock">🔒</span>' : ""}</button></li>`;
   });
-  $("panel").innerHTML = '<p>Tap a step to jump to it. Then close this list and focus on that one step.</p>' + html + "</ol>";
+  html += "</ol>";
+  html += confirmReset
+    ? `<div class="reset"><span>Clear all ticks, practice logs and timers on this device?</span><button type="button" class="danger" id="resetYes">Clear everything</button><button type="button" class="link-btn" id="resetNo">Keep my progress</button></div>`
+    : `<div class="reset"><button type="button" class="link-btn" id="resetAsk">Reset my progress</button></div>`;
+  $("panel").innerHTML = '<p>Tap an open step to jump to it, then close this list and focus on that one step. Locked steps stay hidden until you reach them.</p>' + html;
   $("panel").querySelectorAll("button[data-k]").forEach(b => b.onclick = () => { go(+b.dataset.k); showList(false); });
+  if ($("resetAsk")) $("resetAsk").onclick = () => { confirmReset = true; panel(); };
+  if ($("resetNo")) $("resetNo").onclick = () => { confirmReset = false; panel(); };
+  if ($("resetYes")) $("resetYes").onclick = () => {
+    done = new Set(); logs = {}; modStart = {}; confirmReset = false; save(); showList(false); go(0);
+  };
+}
+
+function lockCard(lk) {
+  const s = STEPS[i];
+  let body = `<p class="do">${lk.text}</p>`;
+  if (lk.kind === "time") body += `<div class="clock" id="clock" aria-label="Time until this module opens"></div><p class="sub">Opens on ${fmtDate(lk.at)}. Keep practising the steps you've already ticked. Repetition is what makes them stick.</p>`;
+  $("card").innerHTML = `<div class="eyebrow">${s.s} · Step ${i + 1}</div><h1>Not yet</h1>${body}`;
+  tickClock();
+}
+
+function tickClock() {
+  const c = $("clock"); if (!c) return;
+  const lk = lockReason(i);
+  if (!lk || lk.kind !== "time") { render(); return; }
+  c.innerHTML = fmtLeft(lk.at - Date.now()).map(([v, u]) => `<div><b>${String(v).padStart(2, "0")}</b><span>${u}</span></div>`).join("");
+}
+setInterval(tickClock, 1000);
+
+function logBlock() {
+  if (!needsLog(i)) return "";
+  const L = logOf(i), ready = logReady(i);
+  const rows = L.map((e, n) => `<li><span>${fmtDate(e.t)}</span><span>${e.ok} of ${e.reps} passed the Check</span><span class="${e.ok / e.reps >= PASS_RATE ? "pass" : "miss"}">${e.ok / e.reps >= PASS_RATE ? "Pass" : "Keep going"}</span><button type="button" class="x" data-n="${n}" aria-label="Delete this session">×</button></li>`).join("");
+  const last = L[L.length - 1];
+  let status;
+  if (ready) status = "Done. You can tick this step off.";
+  else if (L.length < NEED_SESSIONS) status = `Log ${NEED_SESSIONS - L.length} more session${NEED_SESSIONS - L.length === 1 ? "" : "s"}. Your latest one needs at least ${PASS_RATE * 10} out of 10 to pass.`;
+  else status = `Your latest session scored ${last.ok} of ${last.reps}. Practise again and log a session with at least ${Math.ceil(PASS_RATE * 100)}% passing.`;
+  return `<section class="log">
+    <h2>Practice log</h2>
+    <p class="sub">Do at least ${MIN_REPS} reps, then count how many passed the <b>Check</b> above.</p>
+    ${rows ? `<ul class="rows">${rows}</ul>` : ""}
+    <form id="logForm" class="logform" novalidate>
+      <label for="reps-${i}">Reps done<input id="reps-${i}" type="number" inputmode="numeric" min="${MIN_REPS}" max="500" value="${MIN_REPS}" required></label>
+      <label for="ok-${i}">Passed the Check<input id="ok-${i}" type="number" inputmode="numeric" min="0" max="500" placeholder="0" required></label>
+      <button type="submit" class="add">Log session</button>
+    </form>
+    <p class="err" id="logErr" hidden></p>
+    <p class="status ${ready ? "ok" : ""}">${status}</p>
+  </section>`;
 }
 
 function render() {
-  const s = STEPS[i];
-  $("card").innerHTML = `
-    <div class="eyebrow">${s.s} · Step ${i + 1}</div>
-    <h1>${s.t}</h1>
-    <p class="do">${s.d}</p>
-    <ul class="how">${s.how.map(h => `<li>${h}</li>`).join("")}</ul>
-    <dl class="box">
-      <dt>Feel</dt><dd class="feel">${s.feel}</dd>
-      <dt>Check</dt><dd>${s.check}</dd>
-      <dt>Practise</dt><dd>${s.drill}</dd>
-    </dl>
-    <div class="got"><input type="checkbox" id="got-${i}" ${done.has(i) ? "checked" : ""}><label for="got-${i}">I've got this. It feels normal now.</label></div>`;
-  $("got-" + i).onchange = e => {
-    e.target.checked ? done.add(i) : done.delete(i);
-    store.set("golf-done", [...done]); strip(); panel();
-  };
+  const s = STEPS[i], lk = lockReason(i);
+  if (!lk && MODULES.includes(s.s) && modStart[s.s] === undefined) { modStart[s.s] = Date.now(); save(); }
+  if (lk) lockCard(lk);
+  else {
+    const ready = logReady(i);
+    $("card").innerHTML = `
+      <div class="eyebrow">${s.s} · Step ${i + 1}</div>
+      <h1>${s.t}</h1>
+      <p class="do">${s.d}</p>
+      <ul class="how">${s.how.map(h => `<li>${h}</li>`).join("")}</ul>
+      <dl class="box">
+        <dt>Feel</dt><dd class="feel">${s.feel}</dd>
+        <dt>Check</dt><dd>${s.check}</dd>
+        <dt>Practise</dt><dd>${s.drill}</dd>
+      </dl>
+      ${logBlock()}
+      <div class="got ${ready ? "" : "off"}"><input type="checkbox" id="got-${i}" ${done.has(i) ? "checked" : ""} ${ready || done.has(i) ? "" : "disabled"}><label for="got-${i}">I've got this. It feels normal now.</label></div>`;
+    $("got-" + i).onchange = e => { e.target.checked ? done.add(i) : done.delete(i); save(); render(); };
+    const f = $("logForm");
+    if (f) {
+      f.onsubmit = e => {
+        e.preventDefault();
+        const reps = parseInt($("reps-" + i).value, 10), ok = parseInt($("ok-" + i).value, 10);
+        const err = $("logErr");
+        let msg = "";
+        if (!(reps >= MIN_REPS)) msg = `Do at least ${MIN_REPS} reps before logging a session.`;
+        else if (isNaN(ok) || ok < 0) msg = "Enter how many reps passed the Check (0 or more).";
+        else if (ok > reps) msg = "Passed reps can't be more than reps done.";
+        if (msg) { err.textContent = msg; err.hidden = false; return; }
+        (logs[i] = logOf(i)).push({ t: Date.now(), reps, ok }); save(); render();
+      };
+      $("card").querySelectorAll(".x").forEach(b => b.onclick = () => {
+        logs[i].splice(+b.dataset.n, 1);
+        if (!logReady(i)) done.delete(i);
+        save(); render();
+      });
+    }
+  }
   $("section").textContent = s.s;
   $("num").textContent = i + 1;
   $("total").textContent = STEPS.length;
   $("back").disabled = i === 0;
-  $("next").disabled = i === STEPS.length - 1;
-  $("next").textContent = i === 0 ? "Start" : "Next";
+  const nxt = i + 1 < STEPS.length ? lockReason(i + 1) : { text: "This is the last step." };
+  const blocked = !!nxt;
+  $("next").disabled = i === STEPS.length - 1 || blocked;
+  $("next").textContent = i === 0 ? "Start" : blocked ? "Locked" : "Next";
+  $("hint").textContent = lk ? "Use Back to return to a step you can practise."
+    : blocked && i < STEPS.length - 1 ? (nxt.kind === "time" ? `Next module opens in ${Math.ceil((nxt.at - Date.now()) / DAY)} day(s), on ${fmtDate(nxt.at)}.` : !done.has(i) ? "Log your practice and tick this step off to unlock the next one." : nxt.text)
+    : "Work on this one thing until it feels normal. Then move on.";
   strip(); panel();
 }
 
@@ -401,17 +567,17 @@ function showList(on) {
   $("panel").hidden = !on;
   $("card").hidden = on;
   document.querySelector(".pager").hidden = on;
-  document.querySelector(".hint").hidden = on;
+  $("hint").hidden = on;
   $("toggleList").textContent = on ? "Close list" : "All steps";
   $("toggleList").setAttribute("aria-expanded", on);
 }
 
 $("back").onclick = () => go(i - 1);
 $("next").onclick = () => go(i + 1);
-$("toggleList").onclick = () => showList($("panel").hidden);
+$("toggleList").onclick = () => { confirmReset = false; showList($("panel").hidden); };
 document.addEventListener("keydown", e => {
-  if (e.target.tagName === "INPUT") return;
-  if (e.key === "ArrowRight") go(i + 1);
+  if (["INPUT", "BUTTON"].includes(e.target.tagName) && e.target.type !== "checkbox" && e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowRight" && !$("next").disabled) go(i + 1);
   if (e.key === "ArrowLeft") go(i - 1);
 });
 let sx = null;
@@ -419,7 +585,7 @@ $("card").addEventListener("touchstart", e => { sx = e.touches[0].clientX; }, { 
 $("card").addEventListener("touchend", e => {
   if (sx === null) return;
   const dx = e.changedTouches[0].clientX - sx; sx = null;
-  if (Math.abs(dx) > 60) go(i + (dx < 0 ? 1 : -1));
+  if (Math.abs(dx) > 60) { if (dx < 0 && !$("next").disabled) go(i + 1); else if (dx > 0) go(i - 1); }
 });
 window.addEventListener("hashchange", () => { const h = fromHash(); if (h !== null && h !== i) go(h, false); });
 
